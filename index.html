@@ -331,7 +331,7 @@
     </footer>
 
     <script>
-        const waUsername = "SilkyBazaar"; 
+        // Aapka WhatsApp Business number (Country Code '91' ke saath)
         const phoneNumber = "916392380133";
 
         const products = [
@@ -356,7 +356,7 @@
 
         products.forEach(product => {
             const defaultMessage = `Hi Silky Bazaar, mujhe ye product order karna hai:\n\n*Product Name:* ${product.name}\n*Image Link:* ${product.image}`;
-            const defaultWhatsappLink = `https://wa.me/${waUsername}?text=${encodeURIComponent(defaultMessage)}`;
+            const defaultWhatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
 
             const productCard = `
                 <div class="reel-card">
@@ -400,7 +400,7 @@
                 message += `\n\n*मेरा सवाल/कमेंट:* ${userComment}`;
             }
 
-            const whatsappUrl = `https://wa.me/${waUsername}?text=${encodeURIComponent(message)}`;
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
 
