@@ -122,12 +122,13 @@
         /* Telegram Video Container Box */
         .video-box {
             width: 100%;
-            min-height: 480px;
+            min-height: 400px;
             background-color: #121212;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 10px;
+            padding: 5px;
+            overflow: hidden;
         }
 
         /* Subtle Watermark Overlay */
@@ -342,10 +343,9 @@
     </footer>
 
     <script>
-        // Aapka WhatsApp Business number (Country Code '91' ke saath)
         const phoneNumber = "916392380133";
 
-        // Yahan aap apni images aur telegram videos jodd sakte hain
+        // Yahan aap naye telegram videos aur images add kar sakte hain
         const products = [
             {
                 id: 1,
@@ -355,42 +355,39 @@
             },
             {
                 id: 2,
+                name: "Pure Tissue Banarasi Saree (Telegram Video)",
+                type: "video",
+                telegramPost: "silkybazaar/5" // Channel post path (e.g. username/post_id)
+            },
+            {
+                id: 3,
                 name: "Designer Bridal Suit Collection 02",
                 type: "image",
                 image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800"
             },
             {
-                id: 3,
+                id: 4,
                 name: "Katan Silk Handloom Saree 03",
                 type: "image",
                 image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800"
-            },
-            {
-                id: 4,
-                name: "Pure Tissue Banarasi Saree (Telegram Video)",
-                type: "video",
-                // Telegram widget post script ko yahan string ke andar daal diya hai
-                embedCode: '<script async src="https://telegram.org/js/telegram-widget.js?24" data-telegram-post="silkybazaar/5" data-width="100%"></script>'
             }
         ];
 
         const catalogContainer = document.getElementById("catalog");
 
         products.forEach(product => {
-            const mediaReference = product.type === "image" ? product.image : "Telegram Video Post";
+            const mediaReference = product.type === "image" ? product.image : `Telegram Video (${product.telegramPost})`;
             const defaultMessage = `Hi Silky Bazaar, mujhe ye product order karna hai:\n\n*Product Name:* ${product.name}\n*Details:* ${mediaReference}`;
             const defaultWhatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
 
-            // Media Content ko dynamic generate karne ka logic (Image ya Video)
-            let mediaContent = "";
+            const card = document.createElement("div");
+            card.className = "reel-card";
+
+            let mediaHTML = "";
             if (product.type === "video") {
-                mediaContent = `
-                    <div class="video-box">
-                        ${product.embedCode}
-                    </div>
-                `;
+                mediaHTML = `<div class="video-box" id="telegram-container-${product.id}"></div>`;
             } else {
-                mediaContent = `
+                mediaHTML = `
                     <div class="image-box" onclick="openFullscreen('${product.image}')">
                         <img src="${product.image}" alt="${product.name}">
                         <div class="watermark">SILKY BAZAAR</div>
@@ -398,32 +395,39 @@
                 `;
             }
 
-            const productCard = `
-                <div class="reel-card">
-                    ${mediaContent}
-                    <div class="card-details">
-                        <div class="product-title">${product.name}</div>
-                        <div class="action-buttons">
-                            <a href="tel:+${phoneNumber}" class="call-btn">
-                                <i class="fa-solid fa-phone"></i> Call
-                            </a>
-                            <a href="${defaultWhatsappLink}" target="_blank" class="whatsapp-btn">
-                                <i class="fa-brands fa-whatsapp"></i> Direct Order
-                            </a>
-                        </div>
-                        
-                        <!-- Comment Box Section -->
-                        <div class="comment-section">
-                            <input type="text" id="comment-${product.id}" class="comment-input" placeholder="कमेंट या सवाल लिखें (उदा: रेट, कलर...)" />
-                            <button onclick="sendCustomComment(${product.id}, '${product.name}', '${product.type === "image" ? product.image : "Telegram Video"}')" class="comment-btn">
-                                <i class="fa-paper-plane"></i> Send
-                            </button>
-                        </div>
+            card.innerHTML = `
+                ${mediaHTML}
+                <div class="card-details">
+                    <div class="product-title">${product.name}</div>
+                    <div class="action-buttons">
+                        <a href="tel:+${phoneNumber}" class="call-btn">
+                            <i class="fa-solid fa-phone"></i> Call
+                        </a>
+                        <a href="${defaultWhatsappLink}" target="_blank" class="whatsapp-btn">
+                            <i class="fa-brands fa-whatsapp"></i> Direct Order
+                        </a>
+                    </div>
+                    <div class="comment-section">
+                        <input type="text" id="comment-${product.id}" class="comment-input" placeholder="कमेंट या सवाल लिखें (उदा: रेट, कलर...)" />
+                        <button onclick="sendCustomComment(${product.id}, '${product.name}', '${mediaReference}')" class="comment-btn">
+                            <i class="fa-paper-plane"></i> Send
+                        </button>
                     </div>
                 </div>
             `;
 
-            catalogContainer.innerHTML += productCard;
+            catalogContainer.appendChild(card);
+
+            // Dynamically load Telegram widget script for videos
+            if (product.type === "video") {
+                const videoContainer = document.getElementById(`telegram-container-${product.id}`);
+                const tgScript = document.createElement("script");
+                tgScript.async = true;
+                tgScript.src = "https://telegram.org/js/telegram-widget.js?24";
+                tgScript.setAttribute("data-telegram-post", product.telegramPost);
+                tgScript.setAttribute("data-width", "100%");
+                videoContainer.appendChild(tgScript);
+            }
         });
 
         // Function to send custom written comment to WhatsApp
