@@ -101,8 +101,8 @@
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8);
         }
 
-        /* 9:16 Image Box */
-        .image-box {
+        /* 9:16 Media Container (Image & Video Both) */
+        .media-box {
             width: 100%;
             aspect-ratio: 9 / 16;
             overflow: hidden;
@@ -111,24 +111,11 @@
             cursor: pointer;
         }
 
-        .image-box img {
+        .media-box img, .media-box video {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
-            pointer-events: none;
-        }
-
-        /* Telegram Video Container Box */
-        .video-box {
-            width: 100%;
-            min-height: 400px;
-            background-color: #121212;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 5px;
-            overflow: hidden;
         }
 
         /* Subtle Watermark Overlay */
@@ -241,7 +228,7 @@
             gap: 6px;
         }
 
-        /* Fullscreen Image Modal */
+        /* Fullscreen Image/Video Modal */
         .fullscreen-modal {
             display: none;
             position: fixed;
@@ -264,13 +251,12 @@
             align-items: center;
         }
 
-        .modal-wrapper img {
+        .modal-wrapper img, .modal-wrapper video {
             max-width: 100%;
             max-height: 90vh;
             object-fit: contain;
             border-radius: 8px;
             box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
-            pointer-events: none;
         }
 
         .modal-wrapper .watermark {
@@ -328,10 +314,10 @@
     <div class="reel-container" id="catalog"></div>
 
     <!-- Fullscreen Modal View -->
-    <div class="fullscreen-modal" id="imageModal">
+    <div class="fullscreen-modal" id="mediaModal">
         <span class="close-btn" onclick="closeFullscreen()">&times;</span>
-        <div class="modal-wrapper">
-            <img id="modalImg" src="" alt="Full View">
+        <div class="modal-wrapper" id="modalContainer">
+            <!-- Fullscreen Content inserted via JS -->
             <div class="watermark">SILKY BAZAAR</div>
         </div>
     </div>
@@ -345,89 +331,76 @@
     <script>
         const phoneNumber = "916392380133";
 
-        // Yahan aap naye telegram videos aur images add kar sakte hain
+        // Yahan 'type: "video"' me Telegram Direct Stream Link daalein (.mp4 format)
         const products = [
             {
                 id: 1,
                 name: "Banarasi Pure Silk Saree 01",
                 type: "image",
-                image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800"
+                src: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800"
             },
             {
                 id: 2,
-                name: "Pure Tissue Banarasi Saree (Telegram Video)",
+                name: "Pure Tissue Banarasi Saree Reel",
                 type: "video",
-                telegramPost: "silkybazaar/5" // Channel post path (e.g. username/post_id)
+                // Telegram Direct MP4 Stream URL (Bot se nikala hua link)
+                src: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
             },
             {
                 id: 3,
                 name: "Designer Bridal Suit Collection 02",
                 type: "image",
-                image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800"
-            },
-            {
-                id: 4,
-                name: "Katan Silk Handloom Saree 03",
-                type: "image",
-                image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800"
+                src: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800"
             }
         ];
 
         const catalogContainer = document.getElementById("catalog");
 
         products.forEach(product => {
-            const mediaReference = product.type === "image" ? product.image : `Telegram Video (${product.telegramPost})`;
-            const defaultMessage = `Hi Silky Bazaar, mujhe ye product order karna hai:\n\n*Product Name:* ${product.name}\n*Details:* ${mediaReference}`;
+            const defaultMessage = `Hi Silky Bazaar, mujhe ye product order karna hai:\n\n*Product Name:* ${product.name}\n*Link:* ${product.src}`;
             const defaultWhatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
-
-            const card = document.createElement("div");
-            card.className = "reel-card";
 
             let mediaHTML = "";
             if (product.type === "video") {
-                mediaHTML = `<div class="video-box" id="telegram-container-${product.id}"></div>`;
+                mediaHTML = `
+                    <div class="media-box" onclick="openFullscreen('video', '${product.src}')">
+                        <video src="${product.src}" autoplay loop muted playsinline></video>
+                        <div class="watermark">SILKY BAZAAR</div>
+                    </div>
+                `;
             } else {
                 mediaHTML = `
-                    <div class="image-box" onclick="openFullscreen('${product.image}')">
-                        <img src="${product.image}" alt="${product.name}">
+                    <div class="media-box" onclick="openFullscreen('image', '${product.src}')">
+                        <img src="${product.src}" alt="${product.name}">
                         <div class="watermark">SILKY BAZAAR</div>
                     </div>
                 `;
             }
 
-            card.innerHTML = `
-                ${mediaHTML}
-                <div class="card-details">
-                    <div class="product-title">${product.name}</div>
-                    <div class="action-buttons">
-                        <a href="tel:+${phoneNumber}" class="call-btn">
-                            <i class="fa-solid fa-phone"></i> Call
-                        </a>
-                        <a href="${defaultWhatsappLink}" target="_blank" class="whatsapp-btn">
-                            <i class="fa-brands fa-whatsapp"></i> Direct Order
-                        </a>
-                    </div>
-                    <div class="comment-section">
-                        <input type="text" id="comment-${product.id}" class="comment-input" placeholder="कमेंट या सवाल लिखें (उदा: रेट, कलर...)" />
-                        <button onclick="sendCustomComment(${product.id}, '${product.name}', '${mediaReference}')" class="comment-btn">
-                            <i class="fa-paper-plane"></i> Send
-                        </button>
+            const productCard = `
+                <div class="reel-card">
+                    ${mediaHTML}
+                    <div class="card-details">
+                        <div class="product-title">${product.name}</div>
+                        <div class="action-buttons">
+                            <a href="tel:+${phoneNumber}" class="call-btn">
+                                <i class="fa-solid fa-phone"></i> Call
+                            </a>
+                            <a href="${defaultWhatsappLink}" target="_blank" class="whatsapp-btn">
+                                <i class="fa-brands fa-whatsapp"></i> Direct Order
+                            </a>
+                        </div>
+                        <div class="comment-section">
+                            <input type="text" id="comment-${product.id}" class="comment-input" placeholder="कमेंट या सवाल लिखें (उदा: रेट, कलर...)" />
+                            <button onclick="sendCustomComment(${product.id}, '${product.name}', '${product.src}')" class="comment-btn">
+                                <i class="fa-paper-plane"></i> Send
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
 
-            catalogContainer.appendChild(card);
-
-            // Dynamically load Telegram widget script for videos
-            if (product.type === "video") {
-                const videoContainer = document.getElementById(`telegram-container-${product.id}`);
-                const tgScript = document.createElement("script");
-                tgScript.async = true;
-                tgScript.src = "https://telegram.org/js/telegram-widget.js?24";
-                tgScript.setAttribute("data-telegram-post", product.telegramPost);
-                tgScript.setAttribute("data-width", "100%");
-                videoContainer.appendChild(tgScript);
-            }
+            catalogContainer.innerHTML += productCard;
         });
 
         // Function to send custom written comment to WhatsApp
@@ -435,7 +408,7 @@
             const commentBox = document.getElementById(`comment-${id}`);
             const userComment = commentBox.value.trim();
 
-            let message = `Hi Silky Bazaar,\n\n*Product Name:* ${name}\n*Media Info:* ${mediaInfo}`;
+            let message = `Hi Silky Bazaar,\n\n*Product Name:* ${name}\n*Media Link:* ${mediaInfo}`;
             
             if (userComment !== "") {
                 message += `\n\n*मेरा सवाल/कमेंट:* ${userComment}`;
@@ -445,17 +418,32 @@
             window.open(whatsappUrl, '_blank');
         }
 
-        // Open Fullscreen Image Logic
-        function openFullscreen(imgSrc) {
-            const modal = document.getElementById("imageModal");
-            const modalImg = document.getElementById("modalImg");
+        // Open Fullscreen Media Logic
+        function openFullscreen(type, mediaSrc) {
+            const modal = document.getElementById("mediaModal");
+            const container = document.getElementById("modalContainer");
+
+            if(type === 'video') {
+                container.innerHTML = `
+                    <video src="${mediaSrc}" controls autoplay style="max-width:100%; max-height:90vh; border-radius:8px;"></video>
+                    <div class="watermark">SILKY BAZAAR</div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <img src="${mediaSrc}" alt="Full View">
+                    <div class="watermark">SILKY BAZAAR</div>
+                `;
+            }
+
             modal.style.display = "flex";
-            modalImg.src = imgSrc;
         }
 
-        // Close Fullscreen Image Logic
+        // Close Fullscreen Media Logic
         function closeFullscreen() {
-            document.getElementById("imageModal").style.display = "none";
+            const modal = document.getElementById("mediaModal");
+            const container = document.getElementById("modalContainer");
+            modal.style.display = "none";
+            container.innerHTML = `<div class="watermark">SILKY BAZAAR</div>`;
         }
     </script>
 
